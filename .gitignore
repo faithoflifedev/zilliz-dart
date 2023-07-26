@@ -12,3 +12,12 @@ doc/api/
 
 # my customizations
 bin/
+
+scratch/
+
+example/bukhari_chapter1.csv
+example/example_1.dart
+example/example_2.dart
+example/hadith.json
+example/ingest_csv.dart
+example/ingest_json.dart
