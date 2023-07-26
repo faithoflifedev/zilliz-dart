@@ -1,0 +1,22 @@
+name: zilliz_example
+description: A sample command-line application.
+version: 1.0.0
+# repository: https://github.com/my_org/my_repo
+
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+# Add regular dependencies here.
+dependencies:
+  langchain:
+    path: ../../langchain_dart/packages/langchain
+  langchain_openai:
+    path: ../../langchain_dart/packages/langchain_openai
+  loggy: ^2.0.3
+  universal_io: ^2.2.2
+  zilliz:
+    path: ../
+# dependency_overrides:
+
