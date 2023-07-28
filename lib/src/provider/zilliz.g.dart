@@ -240,7 +240,6 @@ class _ZillizClient implements ZillizClient {
               _dio.options.baseUrl,
               baseUrl,
             ))));
-
     final value = InsertResponse.fromJson(_result.data!);
     return value;
   }

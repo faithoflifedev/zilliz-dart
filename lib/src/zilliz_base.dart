@@ -89,7 +89,18 @@ class Zilliz with UiLoggy {
   Future<CollectionDropResponse> dropCollection(String name) =>
       rest.dropCollection({'collectionName': name});
 
-  Future<QueryResponse> query(VectorQuery query) => rest.query(query);
+  Future<List<T>> query<T>({
+    required VectorQuery query,
+    required T Function(Map<String, dynamic>) fromJson,
+  }) async {
+    final queryResponse = await rest.query(query);
+
+    if (queryResponse.code != 200) {
+      throw Exception(queryResponse.message);
+    }
+
+    return queryResponse.data!.map((e) => fromJson(e)).toList();
+  }
 
   Future<QueryResponse> search(VectorSearch search) => rest.search(search);
 

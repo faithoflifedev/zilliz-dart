@@ -1,6 +1,6 @@
 name: zilliz
 description: The Zilliz Dart project provides a Dart wrapper for the Zilliz REST API, enabling developers to interact with a Milus vector database.
-version: 0.0.1-dev.1
+version: 0.0.1-dev.2
 homepage: https://github.com/faithoflifedev/zilliz-dart
 repository: https://github.com/faithoflifedev/zilliz-dart.git
 

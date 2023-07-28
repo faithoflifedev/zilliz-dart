@@ -24,7 +24,7 @@ Add `zilliz` as a dependency in your `pubspec.yaml` file:
 ```yaml
 dependencies:
   ...
-  zilliz: ^0.0.1-dev.1
+  zilliz: ^0.0.1-dev.2
 ```
 
 Then run `flutter pub get` to fetch the package.
@@ -57,89 +57,92 @@ Here are a few examples demonstrating the usage of the Zilliz Dart wrapper:
 import 'package:zilliz/zilliz.dart';
 
 void main() async {
+  // this code is not really needed, but it's a good idea to check if the API key environment variable has been set.
+  final zillizApiKey = Platform.environment['OPENAI_API_KEY'];
+
+  if (zillizApiKey == null) {
+    stderr.writeln('You need to set your ZillizApiKey key in the ZILLIZ_API_KEY environment variable.');
+
+    exit(1);
+  }
+
   final zilliz = ZillizClient('[your cloud instance or other host]');
 
-  // delete schema if it exists
-  await zilliz.deleteSchema('Question');
-  
-  // define the schema for for your objects
-  final schema = SchemaClass(
-    className: 'Question',
-    vectorizer: 'text2vec-huggingface',
-    moduleConfig: Text2vecHuggingFace(
-      model: 'sentence-transformers/all-MiniLM-L6-v2',
-    ).toJson(),
-  );
+  // drop collection if it exists
+  await zilliz.dropCollection('Question');
 
-  // add the schema to your zilliz instance
-  await zilliz.addSchema(schema);
+  // create a new collection, fields will be assigned dynamically
+  await zilliz.createCollection(Collection(
+    collectionName: 'Question',
+    dimension: 1536,
+  ));
+
     
+  ));
+
   try {
     // use a json file as input documents
     final inputData = json.decode(File('jeopardy_tiny.json').readAsStringSync())
-      as List<dynamic>;
+        as List<dynamic>;
 
     // create the objects that will be uploaded
-    final objects = inputData
-      .map((element) => ZillizObject(
-            className: 'Question',
-            properties: {
-              'category': element['Category'],
-              'question': element['Question'],
-              'answer': element['Answer'],
-            },
-          ))
-      .toList();
+    for (final element in inputData) {
+      await zilliz.insert(
+          collectionName: 'Question',
+          data: element
+            ..addAll({
+              'vector': List.generate(1536, (index) => 0.0),
+            }));
+    }
 
-    // upload the docs into your instance as a batch
-    await zilliz.batchObjects(BatchObjectRequest(objects: objects));
-    
-    print('Object created successfully!');
+    print('Objects created successfully!');
   } catch (e) {
-    print('Error creating object: $e');
+    print('Error creating objects: $e');
   }
 }
 ```
 
 ### Querying objects
+First you'll need a Dart object that will represent the data returned by the query.
 
 ```dart
-import 'package:graphql/client.dart';
-import 'package:zilliz/zilliz.dart';
+class Question {
+  final String category;
+  final String question;
+  final String answer;
 
-void main() async {
-  final zilliz = ZillizClient('[your cloud instance or other host]');
-  
-  try {
-    final QueryOptions options = QueryOptions(document: gql(r'''{
-  Get{
-    Question (
-      limit: 2
-      where: {
-        path: ["category"],
-        operator: Equal,
-        valueText: "ANIMALS"
-      }
-      nearText: {
-        concepts: ["biology"],
-      }
-    ){
-      question
-      answer
-      category
-    }
-  }
-}'''));
-      
-    print('querying...');
+  Question({
+    required this.category,
+    required this.question,
+    required this.answer,
+  });
 
-    final result = await zilliz.getGraphQLClient().query(options);
+  static Question fromJson(Map<String, dynamic> json) => Question(
+        category: json['Category'] as String,
+        question: json['Question'] as String,
+        answer: json['Answer'] as String,
+      );
 
-    print(result.data?['Get']['Question']);
-  } catch (e) {
-    print('Error querying objects: $e');
-  }
+  @override
+  String toString() =>
+      'Category: $category\nQuestion: $question\nAnswer: $answer';
 }
+```
+
+Now you can submit your query using the `Question` class as the generic type that will be returned as a `List` by the query method.  Be sure to list the fields needed by your class in the `outputFields` parameter of the method.
+
+```dart
+  final res = await zilliz.query<Question>(
+    query: VectorQuery(
+      collectionName: 'Question',
+      filter: 'Category = "SCIENCE"',
+      outputFields: ['Category', 'Question', 'Answer'],
+    ),
+    fromJson: Question.fromJson,
+  );
+
+  print(res);
+
 ```
 
 ## Contributing

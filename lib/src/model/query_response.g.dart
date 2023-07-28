@@ -10,7 +10,7 @@ QueryResponse _$QueryResponseFromJson(Map<String, dynamic> json) =>
     QueryResponse(
       code: json['code'] as int,
       data: (json['data'] as List<dynamic>?)
-          ?.map((e) => Match.fromJson(e as Map<String, dynamic>))
+          ?.map((e) => e as Map<String, dynamic>)
           .toList(),
       message: json['message'] as String?,
     );
